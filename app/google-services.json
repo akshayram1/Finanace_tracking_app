@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "773450628900",
+    "project_id": "transacapp-22b6e",
+    "storage_bucket": "transacapp-22b6e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:773450628900:android:2cb95ead6061d131c3bdb1",
+        "android_client_info": {
+          "package_name": "com.example.transac1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEL99hu6ja9LjNABpBRL1QtHCAVSh1umQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
