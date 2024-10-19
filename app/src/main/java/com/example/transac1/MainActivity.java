@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -22,10 +23,10 @@ import com.google.firebase.database.FirebaseDatabase;
 public class MainActivity extends AppCompatActivity {
 
     private static final int SMS_PERMISSION_CODE = 100;
-    private TextView tvParsingStatus, tvParsedSms;
+    private TextView tvParsingStatus, tvParsedSms, tvFirebaseStatus;
+    private EditText etUserName;
     private Button btnParseSms;
     private DatabaseReference mDatabase;
-    private TextView tvFirebaseStatus;
 
     // Separate patterns for credit and debit messages
     private Pattern creditPattern;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         // Initialize UI components
         tvParsingStatus = findViewById(R.id.tv_parsing_status);
         tvParsedSms = findViewById(R.id.tv_parsed_sms);
+        etUserName = findViewById(R.id.et_user_name); // Added EditText for user name
         btnParseSms = findViewById(R.id.btn_parse_sms);
 
         // Initialize Firebase Database
@@ -81,11 +83,23 @@ public class MainActivity extends AppCompatActivity {
 
     // Function to write parsed SMS data to Firebase
     private void writeToFirebase(String accountNumber, String transactionType, String amount, String transactionDate, String referenceNo) {
-        String messageId = mDatabase.push().getKey();
+        String userName = etUserName.getText().toString().trim();
+        if (userName.isEmpty()) {
+            Toast.makeText(this, "Please enter a name", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Extract month from transactionDate (format: 12Oct24 -> Oct)
+        String month = transactionDate.substring(2, 5);
+
+        // Create the path under the user's name, then under the month
+        DatabaseReference userRef = mDatabase.child(userName).child(month);
+
+        String messageId = userRef.push().getKey();
         FinancialMessage message = new FinancialMessage(accountNumber, transactionType, amount, transactionDate, referenceNo);
 
         if (messageId != null) {
-            mDatabase.child(messageId).setValue(message).addOnCompleteListener(task -> {
+            userRef.child(messageId).setValue(message).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     tvFirebaseStatus.setText("Firebase Status: Data Uploaded");
                 } else {
@@ -121,11 +135,6 @@ public class MainActivity extends AppCompatActivity {
             String amount = debitMatcher.group(2);
             String transactionDate = debitMatcher.group(3);
             String referenceNo = debitMatcher.group(5);
-
-            // Swap date and amount for debit
-//            String temp = amount;
-//            amount = transactionDate;
-//            transactionDate = temp;
 
             // Then add to Firebase
             writeToFirebase(accountNumber, "debited", amount, transactionDate, referenceNo);
@@ -176,4 +185,3 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
-
