@@ -1,40 +1,35 @@
 package com.example.transac1;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
-
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.util.Log;
-import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int SMS_PERMISSION_CODE = 100;
-    private Pattern combinedRegex;
     private TextView tvParsingStatus, tvParsedSms;
     private Button btnParseSms;
-
     private DatabaseReference mDatabase;
     private TextView tvFirebaseStatus;
+
+    // Separate patterns for credit and debit messages
+    private Pattern creditPattern;
+    private Pattern debitPattern;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,35 +48,19 @@ public class MainActivity extends AppCompatActivity {
         tvFirebaseStatus = findViewById(R.id.tv_firebase_status);
         tvFirebaseStatus.setText("Firebase Status: Waiting...");
 
-
-        // Define the combined regex pattern for financial SMS parsing
-        combinedRegex = Pattern.compile(
-                "Dear SBI UPI User, ur A/c([A-Za-z0-9]+)\\s+(?<typecred>[A-Za-z]+)\\s+by Rs([+-]?(?:\\d+)?(?:\\.?\\d*))\\s*" +
-                        "(?: on ([A-Za-z0-9]+))?\\s*" +
-                        "(?: by \\(Ref no (\\d+)\\))?" +
-                        "|Dear UPI user A/C ([A-Za-z0-9]+) (?<typedeb>[A-Za-z]+) by ([+-]?(?:\\d+)?(?:\\.?\\d*))" +
-                        "(?: on date ([A-Za-z0-9]+))?" +
-                        "(?: trf to ([A-Za-z0-9]+(?: [A-Za-z]+)*)(?: Refno (\\d+)))" +
-                        "\\.(?: If not u\\? call 1800111109)?\\.?(?: -([A-Za-z]+))?",
+        // Define separate regex patterns for credit and debit transactions
+        creditPattern = Pattern.compile(
+                "Dear SBI User, your A/c ([A-Za-z0-9-]+)-credited by Rs\\.?(\\d+(?:\\.\\d+)?)" +
+                        "\\s+on\\s+(\\d{2}[A-Za-z]{3}\\d{2})\\s+transfer\\s+from\\s+([A-Za-z\\s]+)\\s+Ref\\s+No\\s+(\\d+)\\s*-SBI",
                 Pattern.CASE_INSENSITIVE
         );
 
-
-
-//// Credit SMS Pattern
-//        String creditRegex = "Dear SBI User, your A/c ([A-Za-z0-9-]+)-(?<typecred>credited) by Rs\\.?(\\d+(?:\\.\\d+)?)" +
-//                "\\s+on\\s+(\\d{2}[A-Za-z]{3}\\d{2})\\s+transfer\\s+from\\s+([A-Za-z\\s]+)\\s+Ref\\s+No\\s+(\\d+)\\s*-SBI";
-//
-//// Debit SMS Pattern
-//        String debitRegex = "Dear UPI user A\\/C\\s+([A-Za-z0-9-]+)\\s+(?<typedeb>debited)\\s+by\\s+(\\d+\\.\\d+)\\s+" +
-//                "on\\s+date\\s+(\\d{2}[A-Za-z]{3}\\d{2})\\s+trf\\s+to\\s+([A-Za-z\\s]+)\\s+Refno\\s+(\\d+)\\." +
-//                "\\s+If\\s+not\\s+u\\?\\s+call\\s+1800111109\\.\\s+-SBI";
-//
-//// Compile patterns
-//        Pattern creditPattern = Pattern.compile(creditRegex, Pattern.CASE_INSENSITIVE);
-//        Pattern debitPattern = Pattern.compile(debitRegex, Pattern.CASE_INSENSITIVE);
-
-
+        debitPattern = Pattern.compile(
+                "Dear UPI user A\\/C\\s+([A-Za-z0-9-]+)\\s+debited\\s+by\\s+(\\d+\\.\\d+)\\s+" +
+                        "on\\s+date\\s+(\\d{2}[A-Za-z]{3}\\d{2})\\s+trf\\s+to\\s+([A-Za-z\\s]+)\\s+Refno\\s+(\\d+)\\." +
+                        "\\s+If\\s+not\\s+u\\?\\s+call\\s+1800111109\\.\\s+-SBI",
+                Pattern.CASE_INSENSITIVE
+        );
 
         // Check and request SMS permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
@@ -116,26 +95,47 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Function to parse financial SMS using regex and add to Firebase
+    // Function to parse financial SMS using separate regex for credit and debit
     private void parseFinancialSms(String smsBody) {
-        Matcher matcher = combinedRegex.matcher(smsBody);
-        if (matcher.find()) {
-            String accountNumber = matcher.group(1) != null ? matcher.group(1) : matcher.group(6);
-            String transactionType = matcher.group("typecred") != null ? matcher.group("typecred") : matcher.group("typedeb");
-            String amount = matcher.group(3) != null ? matcher.group(3) : matcher.group(7);
-            String transactionDate = matcher.group(4) != null ? matcher.group(4) : matcher.group(8);
-            String referenceNo = matcher.group(5) != null ? matcher.group(5) : matcher.group(10);
+        Matcher creditMatcher = creditPattern.matcher(smsBody);
+        Matcher debitMatcher = debitPattern.matcher(smsBody);
 
-            // Append parsed data to the TextView
-            String result = "Account: " + accountNumber + "\nType: " + transactionType + "\nAmount: " + amount +
+        if (creditMatcher.find()) {
+            // Credit transaction detected
+            String accountNumber = creditMatcher.group(1);
+            String amount = creditMatcher.group(2);
+            String transactionDate = creditMatcher.group(3);
+            String referenceNo = creditMatcher.group(5);
+
+            // Directly add to Firebase
+            writeToFirebase(accountNumber, "credited", amount, transactionDate, referenceNo);
+
+            // Append parsed data to the TextView (optional, for UI display)
+            String result = "Account: " + accountNumber + "\nType: credited\nAmount: " + amount +
                     "\nDate: " + transactionDate + "\nRef No: " + referenceNo + "\n\n";
             tvParsedSms.append(result);
 
-            // Write data to Firebase
-            writeToFirebase(accountNumber, transactionType, amount, transactionDate, referenceNo);
+        } else if (debitMatcher.find()) {
+            // Debit transaction detected
+            String accountNumber = debitMatcher.group(1);
+            String amount = debitMatcher.group(2);
+            String transactionDate = debitMatcher.group(3);
+            String referenceNo = debitMatcher.group(5);
+
+            // Swap date and amount for debit
+//            String temp = amount;
+//            amount = transactionDate;
+//            transactionDate = temp;
+
+            // Then add to Firebase
+            writeToFirebase(accountNumber, "debited", amount, transactionDate, referenceNo);
+
+            // Append parsed data to the TextView (optional, for UI display)
+            String result = "Account: " + accountNumber + "\nType: debited\nAmount: " + amount +
+                    "\nDate: " + transactionDate + "\nRef No: " + referenceNo + "\n\n";
+            tvParsedSms.append(result);
         }
     }
-
 
     private void initializeSmsParsing() {
         btnParseSms.setEnabled(true);  // Enable the button
@@ -176,3 +176,4 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
+
