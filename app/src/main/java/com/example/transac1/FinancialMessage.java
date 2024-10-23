@@ -6,20 +6,22 @@ public class FinancialMessage {
     private String amount;
     private String transactionDate;
     private String referenceNo;
+    private String personName;
 
-    // Required empty constructor for Firebase
+    // Default constructor required for calls to DataSnapshot.getValue(FinancialMessage.class)
     public FinancialMessage() {
     }
 
-    public FinancialMessage(String accountNumber, String transactionType, String amount, String transactionDate, String referenceNo) {
+    public FinancialMessage(String accountNumber, String transactionType, String amount, String transactionDate, String referenceNo, String personName) {
         this.accountNumber = accountNumber;
         this.transactionType = transactionType;
         this.amount = amount;
         this.transactionDate = transactionDate;
         this.referenceNo = referenceNo;
+        this.personName = personName;
     }
 
-    // Getters and Setters
+    // Getters and setters
     public String getAccountNumber() {
         return accountNumber;
     }
@@ -58,5 +60,13 @@ public class FinancialMessage {
 
     public void setReferenceNo(String referenceNo) {
         this.referenceNo = referenceNo;
+    }
+
+    public String getPersonName() {
+        return personName;
+    }
+
+    public void setPersonName(String personName) {
+        this.personName = personName;
     }
 }

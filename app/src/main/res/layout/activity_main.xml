@@ -7,69 +7,74 @@
     tools:context=".MainActivity">
 
     <!-- Title -->
+
     <TextView
         android:id="@+id/tv_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Financial SMS Parsing"
-        android:textSize="20sp"
-        android:textColor="@android:color/black"
         android:layout_marginTop="32dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:text="Financial SMS Parsing"
+        android:textAlignment="center"
+        android:textColor="@android:color/black"
+        android:textSize="24sp"
+        app:layout_constraintHorizontal_bias="0.317"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:textAlignment="center" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
         android:id="@+id/et_user_name"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="25dp"
+        android:layout_marginHorizontal="16dp"
         android:hint="Enter your name"
-        android:layout_marginTop="10dp"
+        android:minHeight="48dp"
+        android:layout_marginTop="24dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_title" />
 
-
     <!-- Button to trigger SMS parsing -->
-    <Button
-        android:id="@+id/btn_parse_sms"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start SMS Parsing"
-        android:layout_marginTop="20dp"
-        app:layout_constraintTop_toBottomOf="@+id/et_user_name"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp" />
+
+    <!-- Button to test Firebase connection -->
 
     <!-- TextView to show parsing status -->
+
+    <Button
+        android:id="@+id/btn_parse_sms"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="108dp"
+        android:layout_marginTop="28dp"
+        android:minHeight="48dp"
+        android:text="Start SMS Parsing"
+        app:layout_constraintLeft_toLeftOf="@+id/et_user_name"
+        app:layout_constraintTop_toBottomOf="@+id/et_user_name" />
+
     <TextView
         android:id="@+id/tv_parsing_status"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Status: Waiting..."
         android:textSize="16sp"
         android:textColor="@android:color/black"
         android:layout_marginTop="24dp"
         app:layout_constraintTop_toBottomOf="@+id/btn_parse_sms"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="@+id/et_user_name"
+        app:layout_constraintRight_toRightOf="@+id/et_user_name"
         android:textAlignment="center" />
 
     <TextView
         android:id="@+id/tv_firebase_status"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Firebase Status: Waiting..."
         android:textSize="16sp"
         android:textColor="@android:color/black"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@+id/tv_parsing_status"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="@+id/et_user_name"
+        app:layout_constraintRight_toRightOf="@+id/et_user_name"
         android:textAlignment="center" />
 
     <!-- ScrollView to display parsed SMS results -->
